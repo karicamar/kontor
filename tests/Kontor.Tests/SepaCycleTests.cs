@@ -80,6 +80,24 @@ public class SepaCycleTests
     }
 
     [Fact]
+    public async Task Transfers_of_an_account_frozen_after_approval_wait_and_do_not_block_the_file()
+    {
+        await using var app = new KontorApp();
+        var anna = await app.AccountWith("Anna Schmidt", 1_000);
+        var lukas = await app.AccountWith("Lukas Becker", 1_000);
+        var clerk = await app.Clerk();
+        var held = await (await clerk.Pay(To(anna, 100, 1, "Stadtwerke"))).Read<PaymentDto>();
+        await (await clerk.Pay(To(lukas, 50, 2, "Stadtwerke"))).Read<PaymentDto>();
+        await (await (await app.Compliance()).Post($"/api/accounts/{anna.Id}/freeze", new DecisionRequest("Suspected account takeover"))).Read<AccountDto>();
+
+        var batch = await (await (await app.Operations()).Post("/api/sepa/batches")).Read<BatchDto>();
+        Assert.Equal(1, batch.Transactions);
+        Assert.Equal(50m, batch.Total);
+        Assert.Equal("Approved", (await (await clerk.GetAsync($"/api/payments/{held.Id}")).Read<PaymentDto>()).Status);
+        Assert.Equal(100m, (await app.Account(anna.Id)).Held); // still reserved
+    }
+
+    [Fact]
     public async Task The_same_statement_cannot_be_booked_twice()
     {
         await using var app = new KontorApp();

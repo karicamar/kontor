@@ -25,8 +25,11 @@ public sealed class SepaService(
         {
             var now = time.GetUtcNow();
             var executionDate = BusinessCalendar.OnOrAfter(upTo ?? DateOnly.FromDateTime(now.UtcDateTime));
+            // Transfers from an account frozen after approval wait (still reserved) until Compliance unfreezes it
+            // or someone rejects them; they must not block everybody else's file
             var due = await db.Payments
-                .Where(p => p.Status == PaymentStatus.Approved && p.CreditorAccountId == null && p.ExecutionDate <= executionDate)
+                .Where(p => p.Status == PaymentStatus.Approved && p.CreditorAccountId == null && p.ExecutionDate <= executionDate
+                            && db.Accounts.Any(a => a.Id == p.DebtorAccountId && a.Status == AccountStatus.Active))
                 .OrderBy(p => p.CreatedAt)
                 .ToListAsync(ct);
             if (due.Count == 0)

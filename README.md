@@ -210,7 +210,7 @@ OpenAPI document at `/openapi/v1.json` in Development.
 ## Tests
 
 ```bash
-dotnet test   # 147 tests
+dotnet test   # 148 tests
 KONTOR_TEST_POSTGRES="Host=localhost;Username=postgres;Password=postgres" dotnet test   # the same suite on PostgreSQL
 ```
 
