@@ -1,11 +1,30 @@
-# Demo setup: development tokens and the simulated bank are switched on, with demo data.
+# Demo setup with PostgreSQL: development tokens and the simulated bank are switched on, with demo data.
 # For anything real, set Auth__Authority to your identity provider and remove the dev settings.
 services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: kontor
+      POSTGRES_USER: kontor
+      POSTGRES_PASSWORD: ${KONTOR_DB_PASSWORD:?Set KONTOR_DB_PASSWORD}
+    volumes:
+      - kontor-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kontor -d kontor"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   api:
     build: .
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
+      Database__Provider: postgres
+      ConnectionStrings__Default: "Host=db;Database=kontor;Username=kontor;Password=${KONTOR_DB_PASSWORD}"
       Auth__SigningKey: ${KONTOR_SIGNING_KEY:?Set KONTOR_SIGNING_KEY (at least 32 characters), e.g. openssl rand -base64 48}
       Kontor__EnableDevTools: "true"
       Kontor__SeedDemoData: "true"
@@ -18,4 +37,5 @@ services:
       - no-new-privileges:true
 
 volumes:
+  kontor-db:
   kontor-data:

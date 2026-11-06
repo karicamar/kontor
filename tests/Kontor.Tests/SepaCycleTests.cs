@@ -224,3 +224,16 @@ public class AuditTrailTests
         Assert.DoesNotContain(records.EnumerateArray(), r => r.GetProperty("action").GetString() == "payment.created");
     }
 }
+
+public class DatabaseProviderTests
+{
+    [Fact]
+    public async Task Runs_on_the_configured_database()
+    {
+        await using var app = new KontorApp();
+        using var scope = app.Services.CreateScope();
+        var provider = scope.ServiceProvider.GetRequiredService<KontorDb>().Database.ProviderName;
+        var expected = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("KONTOR_TEST_POSTGRES")) ? "Sqlite" : "Npgsql";
+        Assert.Contains(expected, provider);
+    }
+}

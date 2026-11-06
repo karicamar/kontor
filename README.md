@@ -42,7 +42,7 @@ node demo/walkthrough.mjs                     # in a second terminal: one busine
 
 Open <http://localhost:5080>, switch between the four demo users at the top right and click through the day yourself:
 approve as Anton, release or reject the sanctions hit as Cem, send the SEPA file and import the bank statement as Olga.
-Or with Docker: `KONTOR_SIGNING_KEY=$(openssl rand -base64 48) docker compose up --build` (port 8080).
+Or with Docker and PostgreSQL: `KONTOR_SIGNING_KEY=$(openssl rand -base64 48) KONTOR_DB_PASSWORD=$(openssl rand -hex 16) docker compose up --build` (port 8080).
 
 The walkthrough prints ([full output](docs/walkthrough-output.txt)):
 
@@ -160,8 +160,10 @@ Compliance has checked it.
 - **Authorization**: five roles (`clerk`, `approver`, `compliance`, `operations`, `auditor`); every endpoint requires a token
   (fallback policy), the business rules (four-eyes, compliance-only decisions) are enforced in the service, not just the UI.
 - **Integrity**: bookings, status changes and audit records of one request are a single transaction. On SQLite writers are
-  serialized (`BEGIN IMMEDIATE`); accounts and payments also carry concurrency tokens for a server database. A test fires 20
-  parallel payments of 100 € at an account with 1,000 €: exactly 10 succeed.
+  serialized (`BEGIN IMMEDIATE`). On PostgreSQL two requests can read the same account, so accounts and payments carry a
+  concurrency token: the second `UPDATE` fails instead of overwriting the first (lost update), and the request is retried on
+  fresh data, as is a race on a unique key (idempotency key, audit sequence). A test fires 20 parallel payments of 100 € at an
+  account with 1,000 €: exactly 10 succeed, on both databases.
 - **Audit trail**: each record holds the SHA-256 of its content and of the previous record. `GET /api/audit/verify` finds
   the first edited, deleted or reordered record. The test rewrites "who approved" directly in the database, and verification
   points at that record. Records are also written as JSON lines for a SIEM (`Kontor:AuditJsonlPath`).
@@ -208,7 +210,8 @@ OpenAPI document at `/openapi/v1.json` in Development.
 ## Tests
 
 ```bash
-dotnet test   # 146 tests
+dotnet test   # 147 tests
+KONTOR_TEST_POSTGRES="Host=localhost;Username=postgres;Password=postgres" dotnet test   # the same suite on PostgreSQL
 ```
 
 - **Against the official ISO 20022 schemas**: every generated `pain.001.001.09` and `camt.053.001.08` is validated with the
@@ -216,7 +219,7 @@ dotnet test   # 146 tests
 - **Domain**: IBANs from the national example lists (and typos, transpositions, wrong lengths), Easter and TARGET2 holidays,
   SEPA character set, Jaro-Winkler against published values, every risk rule with and without a trigger, the audit chain
   under modification, deletion and "fixed" hashes.
-- **API end to end** (real app in memory, SQLite, controllable clock): the full day from entry to reconciliation, four-eyes
+- **API end to end** (real app in memory, controllable clock; CI runs everything on SQLite **and on PostgreSQL 17**): the full day from entry to reconciliation, four-eyes
   and compliance rules, Verification of Payee, idempotency, parallel overdraft attempts, duplicate and tampered statements,
   direct database tampering with the audit trail, role checks and forged tokens.
 
@@ -224,8 +227,8 @@ dotnet test   # 146 tests
 
 - A demo, not a licensed core banking system: one currency (EUR), SEPA credit transfers only (no direct debits, no instant
   payments), no interest, fees or end-of-day closing.
-- SQLite with `EnsureCreated` keeps it runnable with one command; a production system would use PostgreSQL or SQL Server
-  with migrations. The code is written for that (no SQLite-specific SQL, concurrency tokens on the entities).
+- Runs on SQLite (no setup) or PostgreSQL (`Database:Provider=postgres`, used by `docker compose`). The schema is created
+  with `EnsureCreated`; a production system would use EF Core migrations.
 - Verification of Payee covers accounts held in Kontor; checking other banks would go through the EPC VoP scheme.
 - The AML rules are examples of the kind of rules banks run, with configurable thresholds, not a complete AML system.
 
