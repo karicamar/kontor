@@ -1,0 +1,37 @@
+
+== Four-eyes principle
+  ✘ Clara approves her own 12.400,00 € transfer: 403 Four-eyes principle: a second person has to approve this payment
+  ✔ Anton approves it: Approved
+  ✔ Anton approves Sofia's 6.000 € deposit for the painting: Approved
+  ✘ ...but rejects the second part, flagged KON-AML-003, KON-FRD-002: Rejected
+
+== AML: sanctions hit
+  Golden Lantern Trading, 7.800,00 €: Blocked ("Golden Lantern Trading" matches "Golden Lantern Trading FZE" (DEMO DEMO.0002, similarity 1.00))
+  ✘ An approver cannot decide on it: 403 Only Compliance can decide on a blocked payment
+  ✔ Compliance rejects it: Rejected, reserved money released
+
+== Verification of Payee
+  ✘ Lukas pays "Anna Schmitt": CloseMatch, did you mean "Anna Schmidt"?
+  ✔ Corrected: Match, Booked instantly (both accounts are in Kontor)
+  ✔ Network glitch, the app sends it again with the same Idempotency-Key: 200, same payment, booked once
+
+== SEPA file to the partner bank
+  ✔ KON202611061218126BFA2F: 4 transfers, 19.634,50 €, execution date 2026-11-06
+  ✔ pain.001.001.09 saved to demo/out/ (valid against the ISO 20022 schema, see the tests)
+
+== Bank statement (camt.053) comes back
+  Debit    1.150,00 €  Transfer settled
+  Debit       84,50 €  Transfer settled
+  Credit      84,50 €  Transfer returned (AC04)
+  Debit   12.400,00 €  Transfer settled
+  Debit    6.000,00 €  Transfer settled
+  Credit   2.840,00 €  Credited to customer
+  Credit      75,00 €  Open item: No customer account with IBAN DE34 **** 9999
+  ✔ Ledger nostro 64.135,40 € = bank closing balance 64.135,40 €
+  ✘ Importing the same statement again: 409 Statement STMT-20261106-001 was already imported
+
+== Controls
+  ✔ Balance sheet: assets 64.135,40 € = liabilities 64.135,40 €, 18 journal entries
+  ✔ Audit trail: 24 hash-chained records, intact
+
+Open the dashboard at http://localhost:5080 to see the same day in the browser.

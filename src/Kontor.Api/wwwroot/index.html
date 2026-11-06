@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kontor · Payments back office</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><span class="logo">K</span> Kontor <small>Payments back office · demo</small></div>
+    <label class="who">Signed in as
+      <select id="user">
+        <option value="clara.clerk|clerk">Clara · Clerk</option>
+        <option value="anton.approver|approver">Anton · Approver</option>
+        <option value="cem.compliance|compliance">Cem · Compliance</option>
+        <option value="olga.ops|operations,auditor">Olga · Operations + Audit</option>
+      </select>
+    </label>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="payments" class="active">Payments</button>
+    <button data-tab="queue">Approvals <span class="badge" id="queue-count"></span></button>
+    <button data-tab="compliance">Compliance <span class="badge red" id="blocked-count"></span></button>
+    <button data-tab="sepa">SEPA &amp; bank</button>
+    <button data-tab="ledger">Ledger</button>
+    <button data-tab="audit">Audit trail</button>
+  </nav>
+
+  <main>
+    <div id="toast" class="toast" hidden></div>
+
+    <section id="payments" class="tab active">
+      <div class="grid">
+        <div class="card">
+          <h2>New transfer</h2>
+          <form id="pay-form">
+            <label>From account <select name="debtor" required></select></label>
+            <label>Payee name <input name="name" required maxlength="70" placeholder="Stadtwerke Beispielstadt"></label>
+            <label>Payee IBAN <input name="iban" required placeholder="DE.. .... .... .... .... .."></label>
+            <div class="row">
+              <label>Amount (EUR) <input name="amount" required type="number" step="0.01" min="0.01"></label>
+              <label>Execution date <input name="date" type="date"></label>
+            </div>
+            <label>Reference <input name="text" maxlength="140" placeholder="Rechnung 2026-117"></label>
+            <label class="check" hidden id="confirm-row"><input type="checkbox" name="confirm"> Send anyway, I checked the payee</label>
+            <button type="submit">Submit transfer</button>
+            <p class="hint">Only clerks can enter transfers. From 10,000 € a second person must approve.</p>
+          </form>
+        </div>
+        <div class="card wide">
+          <h2>Customer accounts</h2>
+          <table id="accounts"><thead><tr><th>Holder</th><th>IBAN</th><th class="num">Balance</th><th class="num">Reserved</th><th class="num">Available</th><th>Status</th></tr></thead><tbody></tbody></table>
+        </div>
+      </div>
+      <div class="card">
+        <h2>All transfers</h2>
+        <table id="payment-list"><thead><tr><th>Created</th><th>From → To</th><th class="num">Amount</th><th>Status</th><th>Risk</th><th>Payee check</th><th>Entered / approved by</th></tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <section id="queue" class="tab">
+      <div class="card">
+        <h2>Waiting for a second pair of eyes</h2>
+        <p class="hint">Four-eyes principle: the person who entered a transfer can never approve it, even with the approver role.</p>
+        <div id="queue-list" class="items"></div>
+      </div>
+    </section>
+
+    <section id="compliance" class="tab">
+      <div class="card">
+        <h2>Blocked by AML rules</h2>
+        <p class="hint">Sanctions hits stop the transfer. Releasing needs a documented reason, and the transfer still needs an approver.</p>
+        <div id="blocked-list" class="items"></div>
+      </div>
+    </section>
+
+    <section id="sepa" class="tab">
+      <div class="grid">
+        <div class="card">
+          <h2>1 · Send to the partner bank</h2>
+          <p class="hint">All approved transfers due today go into one pain.001.001.09 file. The customers are debited now.</p>
+          <button id="make-batch">Create SEPA file</button>
+          <table id="batches"><thead><tr><th>File</th><th>Date</th><th class="num">Transfers</th><th class="num">Total</th><th></th></tr></thead><tbody></tbody></table>
+        </div>
+        <div class="card">
+          <h2>2 · Bank statement comes back</h2>
+          <p class="hint">Demo bank: settles every transfer in the file, sends one back (AC04, account closed), and adds a salary payment and a credit for an unknown IBAN.</p>
+          <button id="import-statement">Simulate and import camt.053</button>
+          <div id="import-result"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Open items (reconciliation)</h2>
+        <table id="open-items"><thead><tr><th>Bank ref</th><th>Direction</th><th class="num">Amount</th><th>Counterparty</th><th>Reason</th></tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <section id="ledger" class="tab">
+      <div class="card">
+        <h2>Balance sheet <span id="sheet-status"></span></h2>
+        <div id="sheet"></div>
+      </div>
+    </section>
+
+    <section id="audit" class="tab">
+      <div class="card">
+        <h2>Audit trail <button id="verify" class="small">Verify hash chain</button> <span id="verify-result"></span></h2>
+        <table id="audit-list"><thead><tr><th>#</th><th>Time (UTC)</th><th>Who</th><th>Action</th><th>Details</th><th>Hash</th></tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

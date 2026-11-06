@@ -74,12 +74,12 @@ public static class DemoData
         async Task Pay(string user, Guid from, string name, string iban, decimal amount, string text) =>
             await payments.CreateAsync(new CreatePaymentRequest(from, name, iban, amount, text), Guid.NewGuid().ToString(), user, default);
 
-        await Pay("anna.clerk", anna, "Hausverwaltung Roemerberg GmbH", External(1).Value, 1_150.00m, "Miete November 2026");
-        await Pay("anna.clerk", lukas, "Stadtwerke Beispielstadt", External(2).Value, 84.50m, "Abschlag Strom 11/2026");
-        await Pay("anna.clerk", lukas, "Anna Schmidt", ids[0].Iban!, 25.00m, "Pizza Freitag");
-        await Pay("anna.clerk", baeckerei, "Muehlenwerk Taunus GmbH", External(3).Value, 12_400.00m, "Rechnung 2026-0471 Mehl");
-        await Pay("anna.clerk", mehmet, "Golden Lantern Trading", External(4).Value, 7_800.00m, "Consulting fee");
-        await Pay("anna.clerk", sofia, "Kunsthandel Weber", External(5).Value, 6_000.00m, "Anzahlung Gemaelde");
-        await Pay("anna.clerk", sofia, "Kunsthandel Weber", External(5).Value, 5_500.00m, "Restzahlung Gemaelde");
+        await Pay("clara.clerk", anna, "Hausverwaltung Roemerberg GmbH", External(1).Value, 1_150.00m, "Miete November 2026");
+        await Pay("clara.clerk", lukas, "Stadtwerke Beispielstadt", External(2).Value, 84.50m, "Abschlag Strom 11/2026");
+        await Pay("clara.clerk", lukas, "Anna Schmidt", ids[0].Iban!, 25.00m, "Pizza Freitag");
+        await Pay("clara.clerk", baeckerei, "Muehlenwerk Taunus GmbH", External(3).Value, 12_400.00m, "Rechnung 2026-0471 Mehl");
+        await Pay("clara.clerk", mehmet, "Golden Lantern Trading", External(4).Value, 7_800.00m, "Consulting fee");
+        await Pay("clara.clerk", sofia, "Kunsthandel Weber", External(5).Value, 6_000.00m, "Anzahlung Gemaelde");
+        await Pay("clara.clerk", sofia, "Kunsthandel Weber", External(5).Value, 5_500.00m, "Restzahlung Gemaelde");
     }
 }

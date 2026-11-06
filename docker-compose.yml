@@ -1,0 +1,21 @@
+# Demo setup: development tokens and the simulated bank are switched on, with demo data.
+# For anything real, set Auth__Authority to your identity provider and remove the dev settings.
+services:
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      Auth__SigningKey: ${KONTOR_SIGNING_KEY:?Set KONTOR_SIGNING_KEY (at least 32 characters), e.g. openssl rand -base64 48}
+      Kontor__EnableDevTools: "true"
+      Kontor__SeedDemoData: "true"
+    volumes:
+      - kontor-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  kontor-data:

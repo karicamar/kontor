@@ -12,7 +12,7 @@ public sealed class SanctionsRule : IRiskRule
         var blocked = hit.Score >= SanctionsList.HitThreshold;
         yield return new RiskFinding("KON-AML-001",
             blocked ? "Payee is on the sanctions list" : "Payee name resembles a sanctions list entry",
-            $"\"{c.Payment.CreditorName}\" matches \"{hit.MatchedName}\" ({hit.Party.Programme} {hit.Party.Id}, similarity {hit.Score:0.00})",
+            $"\"{c.Payment.CreditorName}\" matches \"{hit.MatchedName}\" ({hit.Party.Programme} {hit.Party.Id}, similarity {hit.Score.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)})",
             blocked ? RiskAction.Block : RiskAction.Review, blocked ? 100 : 60);
     }
 }

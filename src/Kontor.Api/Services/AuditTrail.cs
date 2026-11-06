@@ -13,7 +13,8 @@ namespace Kontor.Api.Services;
 /// </summary>
 public sealed class AuditTrail
 {
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
+    // Relaxed escaping keeps quotes and umlauts readable in the details; the dashboard inserts them as text, never as HTML
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
     private static readonly JsonSerializerOptions FileJson = new(JsonSerializerDefaults.Web) { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
     private static readonly Lock FileLock = new();
 

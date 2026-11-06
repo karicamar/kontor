@@ -488,3 +488,4 @@ $RECYCLE.BIN/
 appsettings.local.json
 nupkg/
 kontor-audit.jsonl
+demo/out/
