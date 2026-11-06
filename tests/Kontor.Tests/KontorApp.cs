@@ -13,11 +13,17 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Kontor.Tests;
 
-/// <summary>The real API in memory, with its own SQLite file and a clock the test controls (Tuesday 10 Nov 2026, 09:00 UTC).</summary>
+/// <summary>
+/// The real API in memory, with its own database and a clock the test controls (Tuesday 10 Nov 2026, 09:00 UTC).
+/// The database is a throwaway SQLite file, or a fresh PostgreSQL database when KONTOR_TEST_POSTGRES holds a connection
+/// string (CI runs the whole suite both ways).
+/// </summary>
 public sealed class KontorApp : WebApplicationFactory<Program>
 {
     public static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
+    private static readonly string? Postgres = Environment.GetEnvironmentVariable("KONTOR_TEST_POSTGRES");
     private readonly string _db = Path.Combine(Path.GetTempPath(), $"kontor-test-{Guid.NewGuid():N}.db");
+    private readonly string _pgDatabase = $"kontor_test_{Guid.NewGuid():N}";
 
     public FakeTimeProvider Time { get; } = new(new DateTimeOffset(2026, 11, 10, 9, 0, 0, TimeSpan.Zero));
     public string AuditFile { get; } = Path.Combine(Path.GetTempPath(), $"kontor-audit-{Guid.NewGuid():N}.jsonl");
@@ -26,7 +32,13 @@ public sealed class KontorApp : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
-        builder.UseSetting("ConnectionStrings:Default", $"Data Source={_db}");
+        if (Postgres is { Length: > 0 })
+        {
+            builder.UseSetting("Database:Provider", "postgres");
+            builder.UseSetting("ConnectionStrings:Default", $"{Postgres};Database={_pgDatabase}");
+        }
+        else
+            builder.UseSetting("ConnectionStrings:Default", $"Data Source={_db}");
         builder.UseSetting("Auth:SigningKey", "test-signing-key-0123456789abcdef-0123456789");
         builder.UseSetting("Kontor:EnableDevTools", "true");
         builder.UseSetting("Kontor:AuditJsonlPath", AuditFile);

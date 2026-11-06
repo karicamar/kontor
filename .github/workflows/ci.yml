@@ -24,6 +24,27 @@ jobs:
           dotnet list package --vulnerable --include-transitive 2>&1 | tee vuln.txt
           ! grep -q "has the following vulnerable packages" vuln.txt
 
+  postgres:
+    # The same test suite against a real PostgreSQL: concurrency is handled differently there (no global write lock)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      KONTOR_TEST_POSTGRES: "Host=localhost;Port=5432;Username=postgres;Password=postgres"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - run: dotnet test -c Release
+
   codeql:
     runs-on: ubuntu-latest
     steps:

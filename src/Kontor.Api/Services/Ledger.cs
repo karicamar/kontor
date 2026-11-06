@@ -7,12 +7,17 @@ namespace Kontor.Api.Services;
 
 /// <summary>
 /// Runs a piece of work as one database transaction: all bookings, status changes and audit records of a request are
-/// committed together or not at all. On SQLite the transaction takes the write lock up front (BEGIN IMMEDIATE), which
-/// serializes writers; on a server database the accounts' concurrency tokens catch lost updates, and the work is retried.
+/// committed together or not at all.
+/// <list type="bullet">
+/// <item>SQLite: the transaction takes the write lock up front (BEGIN IMMEDIATE), so writers simply wait for each other.</item>
+/// <item>PostgreSQL (read committed): two requests can read the same account. The second UPDATE then finds a newer
+/// <c>Version</c> and fails (lost update prevented), or the second insert of the same idempotency key or audit sequence
+/// number hits the unique index. Both are expected under load: the work is rolled back and run again on fresh data.</item>
+/// </list>
 /// </summary>
 public sealed class UnitOfWork(KontorDb db, AuditTrail audit, ILogger<UnitOfWork> log)
 {
-    private const int MaxAttempts = 3;
+    private const int MaxAttempts = 12;
 
     public async Task<T> RunAsync<T>(Func<Task<T>> work, CancellationToken ct = default)
     {
@@ -28,11 +33,13 @@ public sealed class UnitOfWork(KontorDb db, AuditTrail audit, ILogger<UnitOfWork
                 audit.Flush();
                 return result;
             }
-            catch (DbUpdateConcurrencyException) when (attempt < MaxAttempts)
+            catch (DbUpdateException ex) when (attempt < MaxAttempts && IsRaceCondition(ex))
             {
-                log.LogInformation("Concurrent update, retrying (attempt {Attempt})", attempt);
+                log.LogInformation("Concurrent update ({Reason}), retrying (attempt {Attempt})", ex.GetType().Name, attempt);
                 await tx.RollbackAsync(ct);
                 db.ChangeTracker.Clear();
+                // Small random pause so the requests that collided do not collide again in lockstep
+                await Task.Delay(Random.Shared.Next(5, 20 * attempt), ct);
             }
             catch
             {
@@ -44,6 +51,11 @@ public sealed class UnitOfWork(KontorDb db, AuditTrail audit, ILogger<UnitOfWork
 
     public Task RunAsync(Func<Task> work, CancellationToken ct = default) =>
         RunAsync(async () => { await work(); return true; }, ct);
+
+    /// <summary>A lost update (concurrency token), a unique-key race (23505) or a serialization failure (40001).</summary>
+    private static bool IsRaceCondition(DbUpdateException ex) =>
+        ex is DbUpdateConcurrencyException
+        || ex.InnerException is Npgsql.PostgresException { SqlState: Npgsql.PostgresErrorCodes.UniqueViolation or Npgsql.PostgresErrorCodes.SerializationFailure };
 }
 
 public static class InternalAccounts

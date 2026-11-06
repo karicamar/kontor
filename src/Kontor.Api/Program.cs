@@ -19,8 +19,16 @@ builder.Services.AddOptions<AuthOptions>().BindConfiguration(AuthOptions.Section
     .Validate(o => o.Authority is not null || o.Key is not null, "Configure Auth:Authority (identity provider) or, for development, Auth:SigningKey (32+ characters).")
     .ValidateOnStart();
 
+// SQLite runs without any setup; PostgreSQL is the production choice (Database:Provider = postgres)
 builder.Services.AddDbContext<KontorDb>((sp, o) =>
-    o.UseSqlite(sp.GetRequiredService<IConfiguration>().GetConnectionString("Default") ?? "Data Source=kontor.db"));
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var connection = config.GetConnectionString("Default");
+    if (string.Equals(config["Database:Provider"], "postgres", StringComparison.OrdinalIgnoreCase))
+        o.UseNpgsql(connection ?? throw new InvalidOperationException("ConnectionStrings:Default is required for PostgreSQL."));
+    else
+        o.UseSqlite(connection ?? "Data Source=kontor.db");
+});
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton(sp =>
 {

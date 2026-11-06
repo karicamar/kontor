@@ -205,7 +205,8 @@ public class AuditTrailTests
         using (var scope = app.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<KontorDb>();
-            await db.Database.ExecuteSqlRawAsync("UPDATE Audit SET Actor = 'clara.clerk' WHERE Action = 'payment.approved'");
+            // Quoted identifiers: the same SQL works on SQLite and PostgreSQL
+            await db.Database.ExecuteSqlRawAsync("UPDATE \"Audit\" SET \"Actor\" = 'clara.clerk' WHERE \"Action\" = 'payment.approved'");
         }
 
         var verify = await (await app.Operations()).GetFromJsonAsync<JsonElement>("/api/audit/verify");
