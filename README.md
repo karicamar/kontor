@@ -170,6 +170,21 @@ Compliance has checked it.
   text (no `innerHTML`), with a strict Content Security Policy (`script-src 'self'`).
 - **Errors**: RFC 9457 problem responses with documented types ([docs/errors.md](docs/errors.md)); unexpected errors reveal nothing.
 
+## SIEM integration
+
+With `Kontor:AuditJsonlPath` set, every committed audit record is also appended as one JSON line
+(`{"timestamp":"…Z","source":"kontor","action":"payment.self_approval_denied","actor":"…",…}`).
+[LogSentinel](https://github.com/karicamar/log-sentinel) reads these lines: rule `LS-FIN-001` alerts on attempts to approve
+one's own payment, and its incident correlation links them by mailbox to a phishing mail ([PhishLens](https://github.com/karicamar/phishlens))
+and a login from a new IP. A clerk who misunderstood the process becomes one Medium alert; a phished account trying to push a
+transfer through becomes one Critical incident: *phishing → login from a new IP → self-approval attempt*.
+
+```bash
+logsentinel analyze src/Kontor.Api/kontor-audit.jsonl
+  [Medium  ] clara.clerk tried to approve their own payment
+             T1657 Financial Theft | 1 events
+```
+
 ## API
 
 | Method | Path | Role |
