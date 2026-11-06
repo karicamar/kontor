@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  DEMO sanctions list in the format of the EU Consolidated Financial Sanctions List
+  (https://data.europa.eu/data/datasets/consolidated-list-of-persons-groups-and-entities-subject-to-eu-financial-sanctions).
+  Every name below is INVENTED for testing; none of them refers to a real person or company.
+  For real screening, download the current list and set Kontor:SanctionsListPath.
+-->
+<export xmlns="http://eu.europa.ec/fpi/fsd/export" generationDate="2026-11-01T00:00:00.000+01:00">
+  <sanctionEntity designationDate="2024-03-15" logicalId="900001" euReferenceNumber="DEMO.0001">
+    <regulation programme="DEMO" />
+    <subjectType code="person" />
+    <nameAlias firstName="Boris" middleName="Testowitsch" lastName="Musterow" wholeName="Boris Testowitsch Musterow" />
+    <nameAlias wholeName="Borys Musterov" />
+  </sanctionEntity>
+  <sanctionEntity designationDate="2024-03-15" logicalId="900002" euReferenceNumber="DEMO.0002">
+    <regulation programme="DEMO" />
+    <subjectType code="enterprise" />
+    <nameAlias wholeName="Golden Lantern Holdings Ltd" />
+    <nameAlias wholeName="Golden Lantern Trading FZE" />
+  </sanctionEntity>
+  <sanctionEntity designationDate="2025-01-20" logicalId="900003" euReferenceNumber="DEMO.0003">
+    <regulation programme="DEMO" />
+    <subjectType code="person" />
+    <nameAlias firstName="Viktor" lastName="Exempelsson" wholeName="Viktor Exempelsson" />
+  </sanctionEntity>
+  <sanctionEntity designationDate="2025-06-02" logicalId="900004" euReferenceNumber="DEMO.0004">
+    <regulation programme="DEMO" />
+    <subjectType code="enterprise" />
+    <nameAlias wholeName="Nordwind Shell Shipping LLC" />
+  </sanctionEntity>
+</export>

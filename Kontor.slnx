@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Kontor.Api/Kontor.Api.csproj" />
+    <Project Path="src/Kontor.Domain/Kontor.Domain.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Kontor.Tests/Kontor.Tests.csproj" />
+  </Folder>
+</Solution>
